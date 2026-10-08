@@ -115,7 +115,7 @@
         </div>
     </div>
 
-    <!-- شريط الصوت القوي والخفيف (64kbps) -->
+    <!-- شريط الصوت الجذري -->
     <div id="audioBar" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl p-3 z-40 hidden">
         <div class="max-w-2xl mx-auto flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2">
@@ -128,21 +128,15 @@
                 </div>
             </div>
             <div class="flex items-center flex-wrap gap-2 text-xs">
-                <!-- استخدام معرفات صحيحة ومخففة لسرعة الإنترنت -->
-                <select id="reciterSelect" onchange="updateReciter()" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none w-[130px]">
+                <!-- المعرفات العالمية الدقيقة 100% -->
+                <select id="reciterSelect" onchange="updateReciter()" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none w-[140px]">
                     <option value="ar.abdurrahmaansudais">عبد الرحمن السديس</option>
                     <option value="ar.abdulbasitmurattal">عبد الباسط (مرتل)</option>
                     <option value="ar.abdulsamad">عبد الباسط (مجود)</option>
                     <option value="ar.mahermuaiqly">ماهر المعيقلي</option>
                     <option value="ar.alafasy">مشاري العفاسي</option>
                     <option value="ar.husary">محمود الحصري</option>
-                </select>
-
-                <!-- زر التحكم بالسرعة -->
-                <select id="speedSelect" onchange="updateSpeed()" class="bg-blue-50 border border-blue-200 rounded-lg p-1.5 font-bold text-blue-800 outline-none">
-                    <option value="0.75">سرعة: بطيء</option>
-                    <option value="1.0" selected>سرعة: طبيعي</option>
-                    <option value="1.25">سرعة: سريع</option>
+                    <option value="ar.minshawi">محمد المنشاوي</option>
                 </select>
 
                 <select id="repeatSelect" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none hidden sm:block">
@@ -187,7 +181,7 @@
             morning: [
                 { text: "أَعُوذُ بِاللهِ مِنْ الشَّيْطَانِ الرَّجِيمِ: (اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ...)", count: 1 },
                 { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم: (قُلْ هُوَ ٱللَّهُ أَحَدٌ...)، (قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ...)، (قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ...)", count: 3 },
-                { text: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لا إِلَهَ إِلا اللَّهُ، وَحْدَهُ لا شَرِيكَ لَهُ.", count: 1 },
+                { text: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لا إِلَهَ إِلا اللَّهُ.", count: 1 },
                 { text: "سُبْحَانَ اللهِ وَبِحَمْدِهِ.", count: 100 }
             ],
             evening: [
@@ -225,6 +219,10 @@
         // ================= القرآن والصوت =================
         let allSurahs = [], currentPage = 1, pageAyahs = [], currentAyahIndex = 0, isPlaying = false, currentRepeatCount = 0, activeModalAyah = null;
         const audioPlayer = document.getElementById('audioPlayer');
+
+        // إجبار الصوت على أن يكون طبيعياً 100% دائماً بدون أي تسريع
+        audioPlayer.playbackRate = 1.0;
+        audioPlayer.defaultPlaybackRate = 1.0;
 
         async function fetchSurahs() {
             try {
@@ -307,18 +305,17 @@
             if (activeNode) { activeNode.classList.add('ayah-playing'); activeNode.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 
             const reciter = document.getElementById('reciterSelect').value;
-            const globalAyahNum = pageAyahs[index].number;
+            // استخدام الترقيم العالمي (من 1 إلى 6236) لضمان الدقة المطلقة للسديس وعبدالباسط
+            const globalAyahNum = pageAyahs[index].number; 
 
-            // إظهار رسالة تحميل للمستخدم أثناء جلب الصوت
             document.getElementById('subStatusText').innerHTML = '<i class="fas fa-spinner fa-spin text-amber-500"></i> جاري التحميل...';
             
-            // استخدام رابط 64kbps السريع جداً والداعم لكل القراء
-            audioPlayer.src = `https://cdn.islamic.network/quran/audio/64/${reciter}/${globalAyahNum}.mp3`;
-            updateSpeed();
-            audioPlayer.play().catch(e => console.log("انتظار التحميل..."));
+            // استخدام رابط جودة 128 القياسي والموثوق جداً
+            audioPlayer.src = `https://cdn.islamic.network/quran/audio/128/${reciter}/${globalAyahNum}.mp3`;
+            audioPlayer.playbackRate = 1.0; // تأكيد طبيعة الصوت للمعقيلي
+            audioPlayer.play().catch(e => console.log("انتظار..."));
         }
 
-        // عندما يبدأ الصوت بالعمل، نزيل رسالة التحميل
         audioPlayer.onplaying = function() {
             document.getElementById('audioStatusText').innerText = `يتلو: ${pageAyahs[currentAyahIndex].surah.name} (${pageAyahs[currentAyahIndex].numberInSurah})`;
             document.getElementById('subStatusText').innerText = 'انقر على آية للتفسير';
@@ -351,11 +348,11 @@
             }
         };
 
-        // تم إيقاف القفز العشوائي السريع عند ضعف الإنترنت!
+        // تم إيقاف القفز العشوائي هنا حلاً للمشكلة! لن يتخطى الآية إذا لم يحملها.
         audioPlayer.onerror = function() {
             if (isPlaying) {
                 stopAudio();
-                document.getElementById('subStatusText').innerHTML = '<span class="text-red-500">عذراً، ضعف في الإنترنت! اضغط تشغيل مجدداً</span>';
+                document.getElementById('subStatusText').innerHTML = '<span class="text-red-600 font-bold">خطأ في التحميل. تأكد من الإنترنت واضغط تشغيل.</span>';
             }
         };
 
@@ -367,7 +364,6 @@
         }
 
         function updateReciter() { if (isPlaying) playAyahAtIndex(currentAyahIndex); }
-        function updateSpeed() { audioPlayer.playbackRate = parseFloat(document.getElementById('speedSelect').value); }
 
         async function openAyahTafsir(index) {
             activeModalAyah = pageAyahs[index];
