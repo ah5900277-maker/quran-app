@@ -10,8 +10,6 @@
     
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #f7f7f2; color: #1a1a1a; user-select: none; }
-        
-        /* إزالة علامات الاستضافة */
         netlify-badge, #netlify-badge, .netlify-badge, a[href*="netlify.com"] { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 
         .mushaf-paper { background-color: #fffef6; border: 1px solid #e2dfd2; box-shadow: 0 4px 20px rgba(0,0,0,0.06); max-width: 650px; margin: 0 auto; padding: 24px 20px; min-height: 75vh; position: relative; }
@@ -130,14 +128,15 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 text-xs">
-                <!-- تم إضافة وتصحيح القراء الموثوقين -->
-                <select id="reciterSelect" onchange="updateReciter()" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none">
-                    <option value="ar.abdulbasitmurattal">عبد الباسط عبد الصمد</option>
+                <!-- تم تصحيح أسماء القراء ومعرفاتهم وإضافة عبد الباسط المجود والمرتل -->
+                <select id="reciterSelect" onchange="updateReciter()" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none max-w-[140px]">
+                    <option value="ar.abdulbasitmurattal">عبد الباسط (مرتل)</option>
+                    <option value="ar.abdulsamad">عبد الباسط (مجود)</option>
+                    <option value="ar.abdurrahmaansudais">عبد الرحمن السديس</option>
                     <option value="ar.alafasy">مشاري العفاسي</option>
                     <option value="ar.husary">محمود الحصري</option>
                     <option value="ar.minshawi">محمد المنشاوي</option>
                     <option value="ar.mahermuaiqly">ماهر المعيقلي</option>
-                    <option value="ar.sudais">عبد الرحمن السديس</option>
                 </select>
                 <select id="repeatSelect" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none">
                     <option value="1">تكرار: 1</option>
@@ -208,7 +207,7 @@
             container.innerHTML = '';
             adhkarData[type].forEach((dhikr, index) => {
                 container.innerHTML += `
-                    <div id="dhikr-${index}" class="dhikr-card bg-white border border-gray-200 p-5 rounded-xl shadow-sm relative overflow-hidden" onclick="clickDhikr(${index}, ${dhikr.count})">
+                    <div id="dhikr-${index}" class="dhikr-card bg-white border border-gray-200 p-5 rounded-xl shadow-sm relative overflow-hidden" onclick="clickDhikr(${index})">
                         <p class="text-lg font-['Amiri'] leading-loose text-gray-800 text-justify">${dhikr.text}</p>
                         <div class="mt-4 flex justify-between items-center border-t pt-3">
                             <span class="text-xs text-gray-500 font-bold">التكرار المطلوب: ${dhikr.count}</span>
@@ -220,7 +219,7 @@
             });
         }
 
-        function clickDhikr(index, maxCount) {
+        function clickDhikr(index) {
             const countSpan = document.getElementById(`dhikr-count-${index}`);
             const card = document.getElementById(`dhikr-${index}`);
             let current = parseInt(countSpan.innerText);
@@ -231,6 +230,9 @@
         // ================= القرآن الكريم والصوت =================
         let allSurahs = [], currentPage = 1, pageAyahs = [], currentAyahIndex = 0, isPlaying = false, currentRepeatCount = 0, activeModalAyah = null;
         const audioPlayer = document.getElementById('audioPlayer');
+        // إجبار المتصفح على قراءة الصوت بسرعته الطبيعية دائماً
+        audioPlayer.defaultPlaybackRate = 1.0;
+        audioPlayer.playbackRate = 1.0;
 
         async function fetchSurahs() {
             try {
@@ -303,7 +305,7 @@
 
         function playAyahAtIndex(index) {
             if (index >= pageAyahs.length) {
-                if (currentPage < 604) { changePage(-1); setTimeout(() => { if(isPlaying) playAyahAtIndex(0); }, 1000); }
+                if (currentPage < 604) { changePage(-1); setTimeout(() => { if(isPlaying) playAyahAtIndex(0); }, 1500); }
                 else stopAudio();
                 return;
             }
@@ -315,10 +317,11 @@
             const reciter = document.getElementById('reciterSelect').value;
             document.getElementById('audioStatusText').innerText = `يتلو: ${pageAyahs[index].surah.name} (${pageAyahs[index].numberInSurah})`;
             audioPlayer.src = `https://cdn.islamic.network/quran/audio/128/${reciter}/${pageAyahs[index].number}.mp3`;
+            audioPlayer.playbackRate = 1.0; // تأكيد السرعة الطبيعية
             audioPlayer.play();
         }
 
-        // تم إصلاح الخطأ المنطقي هنا!
+        // تم إضافة فاصل زمني طبيعي لكي لا يبدو الصوت مستعجلاً
         audioPlayer.onended = function() {
             if (!isPlaying) return;
             const maxRepeat = parseInt(document.getElementById('repeatSelect').value) || 1;
@@ -327,10 +330,12 @@
             const nextAction = () => {
                 if (!isPlaying) return;
                 if (currentRepeatCount < maxRepeat) {
-                    audioPlayer.play(); // كرر نفس الآية
+                    // فاصل نصف ثانية قبل إعادة نفس الآية
+                    setTimeout(() => { if(isPlaying) audioPlayer.play(); }, 500); 
                 } else {
-                    currentRepeatCount = 0; // صفر العداد للآية الجديدة
-                    playAyahAtIndex(currentAyahIndex + 1); // انتقل للآية التي تليها
+                    currentRepeatCount = 0; 
+                    // فاصل ثانية كاملة لراحة الأذن قبل الانتقال للآية التي تليها (طبيعي)
+                    setTimeout(() => { if(isPlaying) playAyahAtIndex(currentAyahIndex + 1); }, 1000); 
                 }
             };
 
@@ -346,12 +351,11 @@
             }
         };
 
-        // تجاوز الآية إذا فشل تحميل الصوت
         audioPlayer.onerror = function() {
             if (isPlaying) {
-                console.error("خطأ في الصوت، تخطي للآية التالية...");
+                console.error("خطأ في تحميل صوت القارئ المختار، سيتم التخطي...");
                 currentRepeatCount = 0;
-                playAyahAtIndex(currentAyahIndex + 1);
+                setTimeout(() => { playAyahAtIndex(currentAyahIndex + 1); }, 1000);
             }
         };
 
