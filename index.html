@@ -115,36 +115,45 @@
         </div>
     </div>
 
-    <!-- شريط الصوت (للقرآن فقط) -->
+    <!-- شريط الصوت المحسن والجذري -->
     <div id="audioBar" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl p-3 z-40 hidden">
         <div class="max-w-2xl mx-auto flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-                <button id="mainPlayBtn" onclick="toggleContinuousPlay()" class="w-11 h-11 rounded-full bg-[#0f4c3a] text-white flex items-center justify-center text-lg shadow-md hover:scale-105 transition">
+                <button id="mainPlayBtn" onclick="toggleContinuousPlay()" class="w-11 h-11 rounded-full bg-[#0f4c3a] text-white flex items-center justify-center text-lg shadow-md hover:scale-105 transition flex-shrink-0">
                     <i id="playIcon" class="fas fa-play"></i>
                 </button>
                 <div>
-                    <span id="audioStatusText" class="text-xs font-bold text-gray-800 block">التلاوة الميسرة</span>
+                    <span id="audioStatusText" class="text-xs font-bold text-gray-800 block whitespace-nowrap">التلاوة الميسرة</span>
                     <span id="subStatusText" class="text-[10px] text-gray-500">انقر على آية للتفسير</span>
                 </div>
             </div>
-            <div class="flex items-center gap-2 text-xs">
-                <!-- تم تصحيح أسماء القراء ومعرفاتهم وإضافة عبد الباسط المجود والمرتل -->
-                <select id="reciterSelect" onchange="updateReciter()" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none max-w-[140px]">
-                    <option value="ar.abdulbasitmurattal">عبد الباسط (مرتل)</option>
-                    <option value="ar.abdulsamad">عبد الباسط (مجود)</option>
-                    <option value="ar.abdurrahmaansudais">عبد الرحمن السديس</option>
-                    <option value="ar.alafasy">مشاري العفاسي</option>
-                    <option value="ar.husary">محمود الحصري</option>
-                    <option value="ar.minshawi">محمد المنشاوي</option>
-                    <option value="ar.mahermuaiqly">ماهر المعيقلي</option>
+            <div class="flex items-center flex-wrap gap-2 text-xs">
+                <!-- تم ربط القراء بأقوى سيرفر مجاني في العالم EveryAyah لضمان عدم وجود أخطاء -->
+                <select id="reciterSelect" onchange="updateReciter()" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none w-[130px]">
+                    <option value="Abdurrahmaan_As-Sudais_192kbps">عبد الرحمن السديس</option>
+                    <option value="Abdul_Basit_Murattal_192kbps">عبد الباسط (مرتل)</option>
+                    <option value="Abdul_Basit_Mujawwad_128kbps">عبد الباسط (مجود)</option>
+                    <option value="MaherAlMuaiqly128kbps">ماهر المعيقلي</option>
+                    <option value="Alafasy_128kbps">مشاري العفاسي</option>
+                    <option value="Husary_128kbps">محمود الحصري</option>
+                    <option value="Minshawy_Murattal_128kbps">محمد المنشاوي</option>
                 </select>
-                <select id="repeatSelect" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none">
+
+                <!-- زر التحكم بسرعة الصوت لحل مشكلة القراءة السريعة -->
+                <select id="speedSelect" onchange="updateSpeed()" class="bg-blue-50 border border-blue-200 rounded-lg p-1.5 font-bold text-blue-800 outline-none">
+                    <option value="0.75">سرعة: بطيء</option>
+                    <option value="1.0" selected>سرعة: طبيعي</option>
+                    <option value="1.25">سرعة: سريع</option>
+                </select>
+
+                <select id="repeatSelect" class="bg-gray-100 border border-gray-300 rounded-lg p-1.5 font-semibold text-gray-700 outline-none hidden sm:block">
                     <option value="1">تكرار: 1</option>
                     <option value="3">تكرار: 3</option>
                 </select>
+                
                 <label class="flex items-center gap-1 cursor-pointer bg-emerald-50 text-emerald-800 px-2 py-1.5 rounded-lg border border-emerald-200">
                     <input type="checkbox" id="pauseAfterAyah" class="rounded text-emerald-600 focus:ring-0">
-                    <span class="text-[11px] font-bold">مهلة ترديد</span>
+                    <span class="text-[11px] font-bold">مهلة</span>
                 </label>
             </div>
         </div>
@@ -166,7 +175,6 @@
     <audio id="audioPlayer"></audio>
 
     <script>
-        // التنقل بين الشاشات
         function navTo(screenId) {
             document.querySelectorAll('body > div[id$="Screen"]').forEach(el => el.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
@@ -175,25 +183,22 @@
             window.scrollTo(0,0);
         }
 
-        // ================= الأذكار =================
+        // الأذكار
         const adhkarData = {
             morning: [
                 { text: "أَعُوذُ بِاللهِ مِنْ الشَّيْطَانِ الرَّجِيمِ: (اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ...)", count: 1 },
                 { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم: (قُلْ هُوَ ٱللَّهُ أَحَدٌ...)، (قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ...)، (قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ...)", count: 3 },
                 { text: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لا إِلَهَ إِلا اللَّهُ، وَحْدَهُ لا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.", count: 1 },
-                { text: "اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ.", count: 1 },
                 { text: "سُبْحَانَ اللهِ وَبِحَمْدِهِ.", count: 100 }
             ],
             evening: [
                 { text: "أَعُوذُ بِاللهِ مِنْ الشَّيْطَانِ الرَّجِيمِ: (اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ...)", count: 1 },
                 { text: "بِسْمِ اللهِ الرَّحْمنِ الرَّحِيم: الإخلاص، الفلق، والناس", count: 3 },
                 { text: "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لا إِلَهَ إِلا اللَّهُ، وَحْدَهُ لا شَرِيكَ لَهُ.", count: 1 },
-                { text: "اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ.", count: 1 },
                 { text: "سُبْحَانَ اللهِ وَبِحَمْدِهِ.", count: 100 }
             ],
             sleep: [
                 { text: "بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا.", count: 1 },
-                { text: "يجمع كفيه ثم ينفث فيهما فيقرأ: قل هو الله أحد، قل أعوذ برب الفلق، قل أعوذ برب الناس، ثم يمسح بهما ما استطاع من جسده.", count: 3 },
                 { text: "آية الكرسي: (اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ...).", count: 1 },
                 { text: "سُبْحَانَ اللَّهِ (33)، الْحَمْدُ لِلَّهِ (33)، اللَّهُ أَكْبَرُ (34).", count: 1 }
             ]
@@ -227,12 +232,9 @@
             else if (current === 1) { countSpan.innerHTML = '<i class="fas fa-check"></i>'; card.classList.add('completed'); }
         }
 
-        // ================= القرآن الكريم والصوت =================
+        // ================= القرآن والصوت =================
         let allSurahs = [], currentPage = 1, pageAyahs = [], currentAyahIndex = 0, isPlaying = false, currentRepeatCount = 0, activeModalAyah = null;
         const audioPlayer = document.getElementById('audioPlayer');
-        // إجبار المتصفح على قراءة الصوت بسرعته الطبيعية دائماً
-        audioPlayer.defaultPlaybackRate = 1.0;
-        audioPlayer.playbackRate = 1.0;
 
         async function fetchSurahs() {
             try {
@@ -303,6 +305,11 @@
             else { isPlaying = true; document.getElementById('playIcon').className = 'fas fa-pause'; playAyahAtIndex(currentAyahIndex); }
         }
 
+        // دالة التنسيق لسيرفرات EveryAyah العالمية (تحويل الرقم لـ 3 خانات)
+        function padNum(num) {
+            return num.toString().padStart(3, '0');
+        }
+
         function playAyahAtIndex(index) {
             if (index >= pageAyahs.length) {
                 if (currentPage < 604) { changePage(-1); setTimeout(() => { if(isPlaying) playAyahAtIndex(0); }, 1500); }
@@ -314,14 +321,19 @@
             const activeNode = document.getElementById(`ayah-node-${index}`);
             if (activeNode) { activeNode.classList.add('ayah-playing'); activeNode.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 
-            const reciter = document.getElementById('reciterSelect').value;
+            const reciterFolder = document.getElementById('reciterSelect').value;
+            const surahNumber = padNum(pageAyahs[index].surah.number);
+            const ayahNumberInSurah = padNum(pageAyahs[index].numberInSurah);
+            const fileName = surahNumber + ayahNumberInSurah + '.mp3';
+
             document.getElementById('audioStatusText').innerText = `يتلو: ${pageAyahs[index].surah.name} (${pageAyahs[index].numberInSurah})`;
-            audioPlayer.src = `https://cdn.islamic.network/quran/audio/128/${reciter}/${pageAyahs[index].number}.mp3`;
-            audioPlayer.playbackRate = 1.0; // تأكيد السرعة الطبيعية
+            
+            // استخدام سيرفر EveryAyah لضمان عمل السديس وعبدالباسط 100%
+            audioPlayer.src = `https://everyayah.com/data/${reciterFolder}/${fileName}`;
+            updateSpeed(); // تطبيق السرعة المختارة
             audioPlayer.play();
         }
 
-        // تم إضافة فاصل زمني طبيعي لكي لا يبدو الصوت مستعجلاً
         audioPlayer.onended = function() {
             if (!isPlaying) return;
             const maxRepeat = parseInt(document.getElementById('repeatSelect').value) || 1;
@@ -330,11 +342,9 @@
             const nextAction = () => {
                 if (!isPlaying) return;
                 if (currentRepeatCount < maxRepeat) {
-                    // فاصل نصف ثانية قبل إعادة نفس الآية
                     setTimeout(() => { if(isPlaying) audioPlayer.play(); }, 500); 
                 } else {
                     currentRepeatCount = 0; 
-                    // فاصل ثانية كاملة لراحة الأذن قبل الانتقال للآية التي تليها (طبيعي)
                     setTimeout(() => { if(isPlaying) playAyahAtIndex(currentAyahIndex + 1); }, 1000); 
                 }
             };
@@ -351,11 +361,11 @@
             }
         };
 
+        // إيقاف التلاوة تماماً وعدم القفز السريع إذا كان هناك مشكلة بالإنترنت
         audioPlayer.onerror = function() {
             if (isPlaying) {
-                console.error("خطأ في تحميل صوت القارئ المختار، سيتم التخطي...");
-                currentRepeatCount = 0;
-                setTimeout(() => { playAyahAtIndex(currentAyahIndex + 1); }, 1000);
+                stopAudio();
+                alert("عذراً، حدث خطأ في تحميل صوت هذه الآية. يرجى التأكد من اتصال الإنترنت أو تحديث الصفحة.");
             }
         };
 
@@ -367,6 +377,12 @@
         }
 
         function updateReciter() { if (isPlaying) playAyahAtIndex(currentAyahIndex); }
+        
+        // دالة تطبيق سرعة الصوت
+        function updateSpeed() {
+            const speed = parseFloat(document.getElementById('speedSelect').value);
+            audioPlayer.playbackRate = speed;
+        }
 
         async function openAyahTafsir(index) {
             activeModalAyah = pageAyahs[index];
